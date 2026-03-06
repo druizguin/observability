@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<IsPackable>true</IsPackable>
+		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+		<Copyright>2025</Copyright>
+		<Authors>David Ruiz</Authors>
+		<Description>Interfaz Componente de Observabilidad.</Description>
+		<Version>1.1.0-beta2</Version>
+		<AssemblyVersion>1.1.0</AssemblyVersion>
+		<FileVersion>1.1.0</FileVersion>
+		<TargetFramework>net8.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<GenerateDocumentationFile>True</GenerateDocumentationFile>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<Folder Include="Logging\" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.5" />
+
+		<!--Resolver dependencia con PropagationContext-->
+		<PackageReference Include="OpenTelemetry.Api" Version="1.14.0" />
+	</ItemGroup>
+
+</Project>
