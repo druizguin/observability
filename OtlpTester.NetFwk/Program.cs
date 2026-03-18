@@ -36,9 +36,9 @@ namespace OtlpTester.NetFwk
 
             // Lee los endpoints configurados
             var endpoints = otlpSection.GetSection("Endpoints").Get<List<OtlpEndpointConfig>>() ?? new List<OtlpEndpointConfig>
-        {
-            new OtlpEndpointConfig { Port = 4317, Protocol = "grpc", Name = "Default gRPC" }
-        };
+            {
+                new OtlpEndpointConfig { Port = 4318, Protocol = "http", Name = "Default Http" }
+            };
 
             Console.WriteLine($"Configured {endpoints.Count} OTLP endpoint(s):");
             foreach (var endpoint in endpoints)
@@ -51,8 +51,8 @@ namespace OtlpTester.NetFwk
                 .AddService(serviceName: serviceName, serviceVersion: serviceVersion)
                 .AddAttributes(new[]
                 {
-            new KeyValuePair<string, object>("deployment.environment", "dev"),
-            new KeyValuePair<string, object>("host.name", Environment.MachineName),
+                    new KeyValuePair<string, object>("deployment.environment", "dev"),
+                    new KeyValuePair<string, object>("host.name", Environment.MachineName),
                 });
 
             // ---------- OpenTelemetry: Traces & Metrics ----------
