@@ -207,11 +207,11 @@ internal class Program
         Console.WriteLine("OtlpTester completed - telemetry sent to all endpoints");
     }
 
-    private static Uri SetEndpointByProtocol(string baseUrl, int port, string path, OtlpExportProtocol protocol)
+    private static Uri SetEndpointByProtocol(string baseUrl, int port, string path, OtlpExportProtocol protocol, string version = "v1")
     {
         var url = $"{baseUrl.TrimEnd('/')}:{port}";
         if (protocol == OtlpExportProtocol.HttpProtobuf)
-            return new Uri($"{url}/v1/{path}");
+            return new Uri($"{url}/{version}/{path}");
         else
             return new Uri(url);
     }
