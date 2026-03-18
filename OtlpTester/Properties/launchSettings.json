@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "OtlpTester": {
+      "commandName": "Project"
+    },
+    "Container (Dockerfile)": {
+      "commandName": "Docker"
+    }
+  }
+}
