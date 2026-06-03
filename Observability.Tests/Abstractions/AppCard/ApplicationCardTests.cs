@@ -3,8 +3,8 @@ namespace Observability.Tests.Abstractions.AppCard;
 
 using System.ComponentModel;
 using AutoFixture;
+using global::Observability.Abstractions;
 using Moq;
-using Observability.Abstractions;
 using Xunit;
 
 public class ApplicationCardTests

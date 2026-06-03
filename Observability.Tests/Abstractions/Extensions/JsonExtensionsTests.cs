@@ -2,7 +2,7 @@ namespace Observability.Tests.Abstractions.Extensions;
 
 using AutoFixture;
 using System.ComponentModel;
-using Observability.Abstractions;
+using global::Observability.Abstractions;
 using Xunit;
 using System.Text.Json;
 

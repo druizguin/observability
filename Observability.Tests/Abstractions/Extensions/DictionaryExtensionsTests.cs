@@ -1,8 +1,8 @@
 namespace Observability.Tests.Abstractions.Extensions;
 
+using global::Observability.Abstractions;
 using System.Collections.Generic;
 using System.ComponentModel;
-using Observability.Abstractions;
 using Xunit;
 
 public class DictionaryExtensionsTests
