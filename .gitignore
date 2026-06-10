@@ -484,3 +484,5 @@ $RECYCLE.BIN/
 # Vim temporary swap files
 *.swp
 eShopOnDapr/
+/Demos/Services/WebOpenObserveDemo/.github/copilot-instructions.md
+/Demos/.github/copilot-instructions.md

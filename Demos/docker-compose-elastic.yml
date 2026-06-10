@@ -1,0 +1,87 @@
+---
+
+services:
+   elasticsearch:
+     image: docker.elastic.co/elasticsearch/elasticsearch:8.15.0
+     container_name: elasticsearch
+     environment:
+       - discovery.type=single-node
+       - xpack.security.enabled=false
+       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+     volumes:
+       - ./docker_data/elastic/data:/usr/share/elasticsearch/data 
+     ports:
+       - "9200:9200"
+     # healthcheck:
+     #   interval: 20s
+     #   retries: 10
+     #   test: curl -s http://localhost:9200/_cluster/health | grep -vq '"status":"red"'
+
+   apm-server:
+     image: docker.elastic.co/apm/apm-server:8.15.0
+     container_name: apm-server
+     cap_add:
+       - CHOWN
+       - DAC_OVERRIDE
+       - SETGID
+       - SETUID
+     cap_drop: ["ALL"]
+     environment:
+       - ELASTIC_APM_SERVER_URL=http://elasticsearch:9200
+       - ELASTIC_APM_KIBANA_URL=http://kibana:5601
+       - ELASTIC_APM_RUM_ENABLED=true
+       # - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+       # - APM_SERVER_HOST=0.0.0.0:8200
+       # - APM_SERVER_OTLP_ENABLED=true
+       # - APM_SERVER_SECRET_TOKEN=${APM_SECRET_TOKEN}
+       # - ELASTIC_APM_SERVER_URL=http://elasticsearch:9200
+       # - ELASTIC_APM_KIBANA_URL=http://kibana:5601
+       # - ELASTIC_APM_RUM_ENABLED=true
+     ports:
+       - "8200:8200"
+     depends_on:
+       - elasticsearch
+         #condition: service_healthy
+       - kibana
+         #condition: service_healthy
+   
+     command: >
+       apm-server -e
+       -E apm-server.rum.enabled=true
+       -E setup.kibana.host=http://kibana:5601
+       -E output.elasticsearch.hosts=["http://elasticsearch:9200"]
+       -E apm-server.kibana.enabled=true
+       -E apm-server.kibana.host=http://kibana:5601 
+     healthcheck:
+       interval: 10s
+       retries: 12
+       test: curl --write-out 'HTTP %{http_code}' --fail --silent --output /dev/null http://localhost:8200/
+   
+   kibana:
+     image: docker.elastic.co/kibana/kibana:8.15.0
+     container_name: kibana 
+     volumes:
+       - ./infra/config/kibana.yml:/usr/share/kibana/config/kibana.yml
+     environment:
+       - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+       - XPACK_SECURITY_ENABLED=false
+     ports:
+       - "5601:5601"
+     depends_on:
+       - elasticsearch
+         #condition: service_healthy
+   
+     healthcheck:
+       interval: 10s
+       retries: 20
+       test: curl --write-out 'HTTP %{http_code}' --fail --silent --output /dev/null http://localhost:5601/api/status
+   
+   # elastic-init:
+   #   image: curlimages/curl:latest
+   #   depends_on:
+   #     - elasticsearch
+   #   entrypoint: >
+   #     sh -c "
+   #     sleep 20 &&
+   #     curl -X PUT http://elasticsearch:9200/otel-logs -H 'Content-Type: application/json' -d '{\"settings\": {\"number_of_shards\": 1, \"number_of_replicas\": 0}} \' &&
+   #     curl -X PUT http://elasticsearch:9200/otel-traces -H 'Content-Type: application/json' -d '{\"settings\": {\"number_of_shards\": 1, \"number_of_replicas\": 0}}\'  " 

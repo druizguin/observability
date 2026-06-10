@@ -1,0 +1,275 @@
+@model WebOpenObserveDemo.Models.VoteDto
+@{
+    ViewData["Title"] = "Votar Producto";
+    var products = ViewBag.Products as List<WebOpenObserveDemo.Models.ProductDto> ?? new List<WebOpenObserveDemo.Models.ProductDto>();
+}
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card shadow">
+                <div class="card-header bg-success text-white">
+                    <h3><i class="bi bi-star-fill"></i> Votar Producto</h3>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Vote" asp-controller="Rating" method="post" id="vote-form">
+                        @Html.AntiForgeryToken()
+
+                        <div class="mb-3">
+                            <label asp-for="ProductoId" class="form-label"></label>
+                            <select asp-for="ProductoId" class="form-select" id="product-select">
+                                <option value="">-- Seleccione un producto --</option>
+                                @foreach (var product in products)
+                                {
+                                    <option value="@product.Id" data-name="@product.Name" data-category="@product.Category">
+                                        @product.Name (@product.Category)
+                                    </option>
+                                }
+                            </select>
+                            <span asp-validation-for="ProductoId" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="UserKey" class="form-label"></label>
+                            <input asp-for="UserKey" class="form-control" placeholder="usuario@ejemplo.com" />
+                            <span asp-validation-for="UserKey" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Valor" class="form-label"></label>
+                            <div class="star-rating" id="star-rating">
+                                <i class="bi bi-star star" data-value="1"></i>
+                                <i class="bi bi-star star" data-value="2"></i>
+                                <i class="bi bi-star star" data-value="3"></i>
+                                <i class="bi bi-star star" data-value="4"></i>
+                                <i class="bi bi-star star" data-value="5"></i>
+                            </div>
+                            <input asp-for="Valor" type="hidden" id="rating-value" />
+                            <span asp-validation-for="Valor" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Comentario" class="form-label"></label>
+                            <textarea asp-for="Comentario" class="form-control" rows="3" 
+                                      placeholder="Comparte tu experiencia con este producto..."></textarea>
+                            <span asp-validation-for="Comentario" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Country" class="form-label"></label>
+                            <input asp-for="Country" class="form-control" placeholder="ESP" maxlength="3" 
+                                   style="text-transform: uppercase;" />
+                            <span asp-validation-for="Country" class="text-danger"></span>
+                            <small class="text-muted">Código de país (3 letras, ej: ESP, USA, MEX)</small>
+                        </div>
+
+                        <input asp-for="Fecha" type="hidden" />
+
+                        <div class="d-flex justify-content-between">
+                            <a href="@Url.Action("Products", "Rating")" class="btn btn-secondary" id="btn-cancel-vote">
+                                <i class="bi bi-x-circle"></i> Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-success" id="btn-submit-vote">
+                                <i class="bi bi-send"></i> Enviar Voto
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+
+    <style>
+        .star-rating {
+            font-size: 2rem;
+            cursor: pointer;
+        }
+        .star {
+            color: #ddd;
+            transition: color 0.2s;
+        }
+        .star:hover,
+        .star.active {
+            color: #ffc107;
+        }
+    </style>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Log de carga del formulario de votación
+            zotrack('page_view', {
+                page: 'vote_form',
+                available_products: @products.Count,
+                timestamp: new Date().toISOString()
+            });
+
+            zotrack('trace', {
+                operation: 'vote_form_loaded',
+                span_kind: 'client',
+                attributes: {
+                    'form.id': 'vote-form',
+                    'products.count': @products.Count
+                }
+            });
+
+            const form = document.getElementById('vote-form');
+            const productSelect = document.getElementById('product-select');
+            const ratingValue = document.getElementById('rating-value');
+            const stars = document.querySelectorAll('.star');
+            let selectedRating = 0;
+
+            // Sistema de estrellas interactivo
+            stars.forEach(star => {
+                star.addEventListener('click', function() {
+                    selectedRating = parseInt(this.getAttribute('data-value'));
+                    ratingValue.value = selectedRating;
+                    updateStars(selectedRating);
+
+                    // Log de selección de rating
+                    zotrack('user_interaction', {
+                        action: 'select_rating',
+                        rating_value: selectedRating,
+                        form: 'vote'
+                    });
+
+                    zotrack('trace', {
+                        operation: 'user_select_rating',
+                        span_kind: 'client',
+                        attributes: {
+                            'vote.rating': selectedRating
+                        }
+                    });
+                });
+
+                star.addEventListener('mouseenter', function() {
+                    const value = parseInt(this.getAttribute('data-value'));
+                    updateStars(value);
+                });
+            });
+
+            document.querySelector('.star-rating').addEventListener('mouseleave', function() {
+                updateStars(selectedRating);
+            });
+
+            function updateStars(value) {
+                stars.forEach((star, index) => {
+                    if (index < value) {
+                        star.classList.add('active');
+                        star.classList.remove('bi-star');
+                        star.classList.add('bi-star-fill');
+                    } else {
+                        star.classList.remove('active');
+                        star.classList.remove('bi-star-fill');
+                        star.classList.add('bi-star');
+                    }
+                });
+            }
+
+            // Tracking de selección de producto
+            productSelect.addEventListener('change', function() {
+                const selectedOption = this.options[this.selectedIndex];
+                const productId = selectedOption.value;
+                const productName = selectedOption.getAttribute('data-name');
+                const category = selectedOption.getAttribute('data-category');
+
+                if (productId) {
+                    zotrack('user_interaction', {
+                        action: 'select_product',
+                        product_id: productId,
+                        product_name: productName,
+                        category: category
+                    });
+
+                    zotrack('trace', {
+                        operation: 'user_select_product_for_vote',
+                        span_kind: 'client',
+                        attributes: {
+                            'product.id': productId,
+                            'product.name': productName,
+                            'product.category': category
+                        }
+                    });
+                }
+            });
+
+            // Envío del formulario con observabilidad completa
+            form.addEventListener('submit', function(e) {
+                const formData = new FormData(form);
+                const productId = formData.get('ProductoId');
+                const userKey = formData.get('UserKey');
+                const rating = formData.get('Valor');
+                const comment = formData.get('Comentario');
+                const country = formData.get('Country');
+
+                const selectedOption = productSelect.options[productSelect.selectedIndex];
+                const productName = selectedOption.getAttribute('data-name');
+
+                // Log completo del voto
+                zotrack('log', {
+                    level: 'info',
+                    message: 'Enviando voto',
+                    vote: {
+                        product_id: productId,
+                        product_name: productName,
+                        user: userKey,
+                        rating: rating,
+                        has_comment: comment && comment.length > 0,
+                        country: country
+                    }
+                });
+
+                // Traza del envío de voto
+                zotrack('trace', {
+                    operation: 'submit_vote',
+                    span_kind: 'client',
+                    attributes: {
+                        'vote.product_id': productId,
+                        'vote.product_name': productName,
+                        'vote.user_key': userKey,
+                        'vote.rating': rating,
+                        'vote.has_comment': comment && comment.length > 0,
+                        'vote.country': country
+                    }
+                });
+
+                // Métricas del voto
+                zotrack('metric', {
+                    name: 'votes.submitted',
+                    value: 1,
+                    unit: 'count',
+                    attributes: {
+                        product_id: productId,
+                        rating: rating,
+                        country: country
+                    }
+                });
+
+                zotrack('metric', {
+                    name: 'votes.rating_value',
+                    value: parseInt(rating),
+                    unit: 'stars',
+                    attributes: {
+                        product_id: productId
+                    }
+                });
+
+                // Deshabilitar botón
+                const btnSubmit = document.getElementById('btn-submit-vote');
+                btnSubmit.disabled = true;
+                btnSubmit.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Enviando...';
+            });
+
+            // Traza de cancelación
+            document.getElementById('btn-cancel-vote').addEventListener('click', function() {
+                zotrack('user_interaction', {
+                    action: 'cancel_vote',
+                    page: 'vote_form'
+                });
+            });
+        });
+    </script>
+}

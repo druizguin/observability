@@ -1,0 +1,19 @@
+@Rating.WebApi_HostAddress = https://localhost:7152
+
+GET {{Rating.WebApi_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
+
+PUT {{Rating.WebApi_HostAddress}}/api/voting
+Content-Type: application/json
+
+{
+  "productoId": "52A57FC6-B451-401E-889A-D0B33B846A79",
+  "userKey": "pedro.picapiedra@gmail.com",
+  "valor": 5,
+  "comentario": "Lo compraré de nuevo.",
+  "fecha": "2025-11-11T16:36:23.588Z"
+}
+
+###

@@ -1,0 +1,111 @@
+@model WebOpenObserveDemo.Models.ProductDto
+@{
+    ViewData["Title"] = $"Detalles: {Model.Name}";
+}
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card shadow">
+                <div class="card-header bg-info text-white">
+                    <h3><i class="bi bi-box"></i> Detalles del Producto</h3>
+                </div>
+                <div class="card-body">
+                    <h4>@Model.Name</h4>
+                    <p><span class="badge bg-info">@Model.Category</span></p>
+
+                    <hr>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <h5>Valoración Promedio</h5>
+                            <div class="d-flex align-items-center">
+                                <span class="display-4 text-warning me-2">@Model.AverageRating.ToString("F1")</span>
+                                <span class="text-muted">/ 5.0</span>
+                            </div>
+                            <div class="star-display">
+                                @for (int i = 1; i <= 5; i++)
+                                {
+                                    if (i <= Math.Round(Model.AverageRating))
+                                    {
+                                        <i class="bi bi-star-fill text-warning"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="bi bi-star text-warning"></i>
+                                    }
+                                }
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Total de Votos</h5>
+                            <p class="display-4">@Model.TotalVotes</p>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <div class="d-flex justify-content-between">
+                        <a href="@Url.Action("Products", "Rating")" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i> Volver
+                        </a>
+                        <a href="@Url.Action("Vote", "Rating", new { productId = Model.Id })" class="btn btn-success" id="btn-vote-this-product">
+                            <i class="bi bi-star"></i> Votar Este Producto
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const productId = '@Model.Id';
+            const productName = '@Model.Name';
+            const avgRating = @Model.AverageRating;
+            const totalVotes = @Model.TotalVotes;
+
+            // Log de visualización de detalles
+            zotrack('page_view', {
+                page: 'product_details',
+                product_id: productId,
+                product_name: productName,
+                avg_rating: avgRating,
+                total_votes: totalVotes
+            });
+
+            zotrack('trace', {
+                operation: 'view_product_details',
+                span_kind: 'client',
+                attributes: {
+                    'product.id': productId,
+                    'product.name': productName,
+                    'product.avg_rating': avgRating,
+                    'product.total_votes': totalVotes
+                }
+            });
+
+            // Métrica de visualizaciones de producto
+            zotrack('metric', {
+                name: 'product.detail_views',
+                value: 1,
+                unit: 'count',
+                attributes: {
+                    product_id: productId,
+                    product_name: productName
+                }
+            });
+
+            // Tracking del botón de votar
+            document.getElementById('btn-vote-this-product').addEventListener('click', function() {
+                zotrack('user_interaction', {
+                    action: 'click_vote_from_details',
+                    product_id: productId,
+                    product_name: productName
+                });
+            });
+        });
+    </script>
+}

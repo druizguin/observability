@@ -1,0 +1,156 @@
+@model WebOpenObserveDemo.Models.ProductCreateDto
+@{
+    ViewData["Title"] = "Crear Producto";
+}
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h3><i class="bi bi-plus-circle"></i> Crear Nuevo Producto</h3>
+                </div>
+                <div class="card-body">
+                    <form asp-action="CreateProduct" asp-controller="Rating" method="post" id="create-product-form">
+                        @Html.AntiForgeryToken()
+
+                        <div class="mb-3">
+                            <label asp-for="Name" class="form-label"></label>
+                            <input asp-for="Name" class="form-control" placeholder="Ej: iPhone 15 Pro" />
+                            <span asp-validation-for="Name" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Category" class="form-label"></label>
+                            <select asp-for="Category" class="form-select">
+                                <option value="">-- Seleccione una categoría --</option>
+                                <option value="Electrónica">Electrónica</option>
+                                <option value="Ropa">Ropa</option>
+                                <option value="Hogar">Hogar</option>
+                                <option value="Deportes">Deportes</option>
+                                <option value="Libros">Libros</option>
+                                <option value="Alimentos">Alimentos</option>
+                                <option value="Juguetes">Juguetes</option>
+                                <option value="Otros">Otros</option>
+                            </select>
+                            <span asp-validation-for="Category" class="text-danger"></span>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="@Url.Action("Products", "Rating")" class="btn btn-secondary" id="btn-cancel">
+                                <i class="bi bi-x-circle"></i> Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-primary" id="btn-submit">
+                                <i class="bi bi-save"></i> Crear Producto
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Log de carga del formulario
+            zotrack('page_view', {
+                page: 'create_product_form',
+                timestamp: new Date().toISOString()
+            });
+
+            const form = document.getElementById('create-product-form');
+            const btnSubmit = document.getElementById('btn-submit');
+            const btnCancel = document.getElementById('btn-cancel');
+
+            // Traza: Inicio de formulario
+            zotrack('trace', {
+                operation: 'create_product_form_loaded',
+                span_kind: 'client',
+                attributes: {
+                    'form.id': 'create-product-form',
+                    'page': 'create_product'
+                }
+            });
+
+            // Tracking de interacciones con campos
+            form.querySelectorAll('input, select').forEach(field => {
+                field.addEventListener('focus', function() {
+                    zotrack('user_interaction', {
+                        action: 'field_focus',
+                        field_name: this.name,
+                        form: 'create_product'
+                    });
+                });
+
+                field.addEventListener('blur', function() {
+                    zotrack('user_interaction', {
+                        action: 'field_blur',
+                        field_name: this.name,
+                        has_value: this.value.length > 0,
+                        form: 'create_product'
+                    });
+                });
+            });
+
+            // Traza y métrica al enviar formulario
+            form.addEventListener('submit', function(e) {
+                const formData = new FormData(form);
+                const productName = formData.get('Name');
+                const category = formData.get('Category');
+
+                // Log del envío
+                zotrack('log', {
+                    level: 'info',
+                    message: 'Enviando formulario de creación de producto',
+                    product_name: productName,
+                    category: category
+                });
+
+                // Traza del envío
+                zotrack('trace', {
+                    operation: 'submit_create_product',
+                    span_kind: 'client',
+                    attributes: {
+                        'product.name': productName,
+                        'product.category': category,
+                        'form.validation_passed': true
+                    }
+                });
+
+                // Métrica: Contador de productos creados (intento)
+                zotrack('metric', {
+                    name: 'products.create_attempts',
+                    value: 1,
+                    unit: 'count',
+                    attributes: {
+                        category: category
+                    }
+                });
+
+                // Deshabilitar botón para evitar doble envío
+                btnSubmit.disabled = true;
+                btnSubmit.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Creando...';
+            });
+
+            // Traza de cancelación
+            btnCancel.addEventListener('click', function(e) {
+                zotrack('user_interaction', {
+                    action: 'cancel_create_product',
+                    page: 'create_product_form'
+                });
+
+                zotrack('trace', {
+                    operation: 'cancel_create_product',
+                    span_kind: 'client',
+                    attributes: {
+                        'ui.action': 'cancel'
+                    }
+                });
+            });
+        });
+    </script>
+}

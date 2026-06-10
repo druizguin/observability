@@ -1,0 +1,155 @@
+services:
+
+  aspiredashboard:
+     image: mcr.microsoft.com/dotnet/aspire-dashboard:latest
+     ports:
+       - "18888:18888" #UI
+       - "18889:18889" #GRPC
+     restart: always
+     networks:
+       - observability-net
+     environment:
+       - DOTNET_DASHBOARD_OTLP_GRPCENDPOINT=0.0.0.0:18889
+       - ASPIRE_DASHBOARD_UNSECURED_ALLOW_ANONYMOUS:true
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.74.0
+    command: ["--config=/etc/otel/otel-collector-config.yaml"]
+    container_name: otel-collector
+    volumes:
+      - ./Configuration:/etc/otel      
+    environment:
+      - ELASTIC_API_KEY=elasticsearch-apikey 
+      - OTEL_EXPORTER_OTLP_HEADERS=api-key=eu01xxe66fa290a6436adb2d21e0883dFFFFNRAL
+
+    ports:  
+      - 8888:8888   # Prometheus metrics exposed by the collector    
+      - 9464:9464   # Prometheus Metrics    
+      - 4317:4317   # OTLP gRPC receiver
+      - 4318:4318   # OTLP HTTP receiver
+    depends_on:
+      - aspiredashboard
+      # - jaeger
+      # - loki
+      # - prometheus
+      # - elasticsearch
+    networks:
+      - observability-net
+    
+
+  # jaeger:
+  #   image: jaegertracing/all-in-one:1.70.0
+  #   container_name: jaeger
+  #   ports:
+  #     - 16686:16686  # Jaeger UI
+  #     - 14317:4317   # OTLP gRPC
+  #     - 4319:4318    # OTLP HTTP
+  #   environment:
+  #     - LOG_LEVEL=debug
+  #     - COLLECTOR_OTLP_ENABLED=true
+  #   networks:
+  #     - observability-net
+
+  # loki:
+  #   image: grafana/loki:main-8b7e82e
+  #   ports:
+  #     - 3100:3100
+  #   networks:
+  #     - observability-net
+
+  # prometheus:
+  #   image: prom/prometheus:v3.4.1
+  #   command:
+  #     - --config.file=/etc/prometheus.yaml
+  #     - --web.enable-remote-write-receiver
+  #     - --enable-feature=exemplar-storage
+  #     - --storage.tsdb.path=/prometheus
+  #   volumes:
+  #     - ./Configuration/prometheus.yaml:/etc/prometheus.yaml
+  #     - ./docker_data/prometheus:/prometheus:rw
+  #   ports:
+  #     - "9090:9090"
+  #   networks:
+  #     - observability-net
+
+  # grafana:
+  #   image: grafana/grafana:12.0.2
+  #   volumes:
+  #     - ./Configuration/grafana-datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml
+  #     - ./docker_data/grafana_data:/var/lib/grafana
+  #   environment:
+  #     - GF_AUTH_ANONYMOUS_ENABLED=true
+  #     - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+  #     - GF_AUTH_DISABLE_LOGIN_FORM=true
+  #     - GF_FEATURE_TOGGLES_ENABLE=traceqlEditor
+  #     - GF_INSTALL_PLUGINS=frser-sqlite-datasource
+  #   ports:
+  #     - "3000:3000"
+  #   networks:
+  #     - observability-net
+  #   depends_on:
+  #     - jaeger
+  #     - loki
+  #     - prometheus
+
+  # redis:
+  #   image: redis:8.0.2
+  #   container_name: redis  
+  #   ports:
+  #     - "6379:6379"
+  #   command: '--requirepass redisPassword'
+  #   volumes:
+  #     - ./docker_data/redis:/data
+
+
+networks:
+  observability-net: 
+    driver: bridge
+
+# volumes:
+#     prometheus-storage:
+
+
+ # tempo:
+  #   image: grafana/tempo:latest
+  #   command: ["-config.file=/etc/tempo.yaml"]
+  #   volumes:
+  #     - ./Configuration/tempo.yaml:/etc/tempo.yaml
+  #     - ./docker_data/tempo:/tmp/tempo
+  #   ports:
+  #     - "3200:3200" # Tempo HTTP API
+  #     - "4318:4317" # gRPC
+  #   networks:
+  #     - observability-net
+  
+
+  # elasticsearch:
+  #   image: docker.elastic.co/elasticsearch/elasticsearch-oss:7.10.2
+  #   hostname: elasticsearch
+  #   volumes:
+  #     - ./docker_data/elastic:/usr/share/elasticsearch/data:rw
+  #   environment:
+  #     - discovery.type=single-node
+  #     - ES_JAVA_OPTS=-Xms512m -Xmx512m
+  #     # - xpack.security.enabled=false
+  #     # - xpack.monitoring.collection.enabled=true
+  #   ports:
+  #     - "9200:9200"
+  #   healthcheck:
+  #     test: ["CMD", "curl", "-f", "http://localhost:9200"]
+  #     interval: 5s
+  #     timeout: 5s
+  #     retries: 15
+  #   networks:
+  #     - observability-net
+
+  # kibana:
+  #   image: docker.elastic.co/kibana/kibana-oss:7.10.2
+  #   hostname: kibana
+  #   environment:
+  #     - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+  #   ports:
+  #     - "5601:5601"
+  #   depends_on:
+  #     - elasticsearch
+  #   networks:
+  #     - observability-net

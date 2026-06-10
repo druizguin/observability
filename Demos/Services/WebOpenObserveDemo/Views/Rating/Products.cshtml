@@ -1,0 +1,253 @@
+@model List<WebOpenObserveDemo.Models.ProductDto>
+@{
+    ViewData["Title"] = "Productos - Sistema de Rating";
+    
+    // Función helper para obtener el color de la categoría
+    string GetCategoryBadgeClass(string category)
+    {
+        return category?.ToLower() switch
+        {
+            "electrónica" or "electronica" => "bg-primary",
+            "ropa" => "bg-danger",
+            "hogar" => "bg-warning text-dark",
+            "deportes" => "bg-success",
+            "libros" => "bg-info text-dark",
+            "alimentos" => "bg-secondary",
+            "juguetes" => "bg-pink text-white",
+            "otros" => "bg-dark",
+            _ => "bg-secondary"
+        };
+    }
+    
+    string GetCategoryIcon(string category)
+    {
+        return category?.ToLower() switch
+        {
+            "electrónica" or "electronica" => "bi-cpu",
+            "ropa" => "bi-bag",
+            "hogar" => "bi-house",
+            "deportes" => "bi-trophy",
+            "libros" => "bi-book",
+            "alimentos" => "bi-basket",
+            "juguetes" => "bi-robot",
+            "otros" => "bi-three-dots",
+            _ => "bi-tag"
+        };
+    }
+}
+
+<style>
+    .bg-pink {
+        background-color: #e83e8c !important;
+    }
+    
+    .category-badge {
+        font-size: 0.85rem;
+        padding: 0.35rem 0.65rem;
+        font-weight: 600;
+    }
+    
+    .product-card {
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .product-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+    }
+</style>
+
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2><i class="bi bi-box-seam"></i> Gestión de Productos</h2>
+            <p class="text-muted">Lista de productos disponibles para votación</p>
+        </div>
+        <div class="col-md-4 text-end">
+            <a href="@Url.Action("CreateProduct", "Rating")" class="btn btn-primary" id="btn-create-product">
+                <i class="bi bi-plus-circle"></i> Crear Producto
+            </a>
+        </div>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle"></i> @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle"></i> @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (Model == null || !Model.Any())
+    {
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i> No hay productos registrados. 
+            <a href="@Url.Action("CreateProduct", "Rating")">Crear el primero</a>
+        </div>
+    }
+    else
+    {
+        <div class="row" id="products-container">
+            @foreach (var product in Model)
+            {
+                <div class="col-md-4 mb-4 product-card" data-product-id="@product.Id">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <i class="bi bi-box"></i> @product.Name
+                            </h5>
+                            <p class="card-text">
+                                <span class="badge @GetCategoryBadgeClass(product.Category) category-badge">
+                                    <i class="bi @GetCategoryIcon(product.Category)"></i> @product.Category
+                                </span>
+                                <span class="badge bg-secondary">@product.Status</span>
+                            </p>
+                            <hr>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <small class="text-muted">
+                                        <i class="bi bi-star-fill text-warning"></i> 
+                                        @product.AverageRating.ToString("F1") / 5.0
+                                    </small>
+                                    <br>
+                                    <small class="text-muted">
+                                        @product.TotalVotes votos
+                                    </small>
+                                </div>
+                                <div>
+                                    <a href="@Url.Action("Vote", "Rating", new { productId = product.Id })" 
+                                       class="btn btn-sm btn-success btn-vote-product"
+                                       data-product-id="@product.Id"
+                                       data-product-name="@product.Name">
+                                        <i class="bi bi-star"></i> Votar
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        // Observabilidad: Trazas y Métricas para la página de productos
+        document.addEventListener('DOMContentLoaded', function() {
+            // Verificar si zotrack está disponible
+            const hasZotrack = typeof zotrack !== 'undefined';
+            
+            if (hasZotrack) {
+                // Log de carga de página
+                zotrack('page_view', {
+                    page: 'products_list',
+                    products_count: @(Model?.Count ?? 0),
+                    timestamp: new Date().toISOString()
+                });
+
+                // Métrica: Contador de productos mostrados
+                zotrack('metric', {
+                    name: 'products.displayed',
+                    value: @(Model?.Count ?? 0),
+                    unit: 'count'
+                });
+            }
+
+            // Trazas para botones de crear producto
+            document.querySelectorAll('#btn-create-product').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    if (hasZotrack) {
+                        zotrack('user_interaction', {
+                            action: 'click_create_product',
+                            page: 'products_list',
+                            timestamp: new Date().toISOString()
+                        });
+
+                        zotrack('trace', {
+                            operation: 'navigate_to_create_product',
+                            span_kind: 'client',
+                            attributes: {
+                                'ui.action': 'create_product',
+                                'ui.component': 'button'
+                            }
+                        });
+                    }
+                });
+            });
+
+            // Trazas para botones de ver producto
+            document.querySelectorAll('.btn-view-product').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    const productId = this.getAttribute('data-product-id');
+                    const productName = this.getAttribute('data-product-name');
+
+                    if (hasZotrack) {
+                        zotrack('user_interaction', {
+                            action: 'click_view_product',
+                            product_id: productId,
+                            product_name: productName,
+                            page: 'products_list'
+                        });
+
+                        zotrack('trace', {
+                            operation: 'view_product_details',
+                            span_kind: 'client',
+                            attributes: {
+                                'product.id': productId,
+                                'product.name': productName,
+                                'ui.action': 'view_details'
+                            }
+                        });
+                    }
+                });
+            });
+
+            // Trazas para botones de votar
+            document.querySelectorAll('.btn-vote-product').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    const productId = this.getAttribute('data-product-id');
+                    const productName = this.getAttribute('data-product-name');
+
+                    if (hasZotrack) {
+                        zotrack('user_interaction', {
+                            action: 'click_vote_product',
+                            product_id: productId,
+                            product_name: productName,
+                            page: 'products_list'
+                        });
+
+                        zotrack('trace', {
+                            operation: 'navigate_to_vote',
+                            span_kind: 'client',
+                            attributes: {
+                                'product.id': productId,
+                                'product.name': productName,
+                                'ui.action': 'vote'
+                            }
+                        });
+
+                        // Métrica: Contador de intenciones de voto
+                        zotrack('metric', {
+                            name: 'vote.intentions',
+                            value: 1,
+                            unit: 'count',
+                            attributes: {
+                                product_id: productId,
+                                product_name: productName
+                            }
+                        });
+                    }
+                });
+            });
+        });
+    </script>
+}

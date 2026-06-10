@@ -1,0 +1,23 @@
+﻿@{
+    ViewData["Title"] = "Actions";
+}
+
+<h2>Acciones</h2>
+
+<button class="btn btn-primary" onclick="sendLog()">Enviar Log</button>
+<button class="btn btn-warning" onclick="sendTrace()">Enviar Traza</button>
+<button class="btn btn-success" onclick="sendMetric()">Enviar Métrica</button>
+
+<script>
+    function sendLog() {
+        zotrack("log_event", { message: "Botón de log pulsado" });
+    }
+
+    function sendTrace() {
+        zotrack("trace_event", { step: "Usuario pulsó traza" });
+    }
+
+    function sendMetric() {
+        zotrack("metric_event", { value: Math.random() * 100 });
+    }
+</script>
