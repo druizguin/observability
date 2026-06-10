@@ -1,0 +1,150 @@
+#LOGS
+otel-logs-otel-output:
+  source:
+    otel_logs_source:
+      ssl: false
+      # sslKeyFile: /usr/share/data-prepper/certs/dp-key.pem
+      # sslKeyCertChainFile: /usr/share/data-prepper/certs/dp-cert.pem
+      unframed_requests: true
+      path: /ingest/${pipelineName}/v1/logs
+      compression: gzip
+      output_format: otel
+      request_timeout: 15000
+      health_check_service: true
+      proto_reflection_service: true
+  sink:
+    - opensearch:
+        hosts: ["http://opensearch:9200"]
+        index: otel_logs
+
+
+
+# metrics
+metric-pipeline:
+  source:
+    otel_metrics_source:
+      ssl: false
+  processor:
+    - otel_metrics:
+  sink:
+    - opensearch:
+        hosts: [ "http://opensearch:9200" ]
+        index: otel_metrics
+
+#traces
+entry-pipeline:
+  delay: "100"
+  source:
+    otel_trace_source:
+      ssl: false
+      #record_type: event
+  sink:
+    - pipeline:
+        name: "raw-pipeline"
+    - pipeline:
+        name: "service-map-pipeline"
+raw-pipeline:
+  source:
+    pipeline:
+      name: "entry-pipeline"
+  processor:
+    - otel_traces:
+  sink:
+    - opensearch:
+        hosts: [ "http://opensearch:9200" ]
+        index: otel_traces
+        index_type: trace-analytics-raw
+service-map-pipeline:
+  delay: "100"
+  source:
+    pipeline:
+      name: "entry-pipeline"
+  processor:
+    - service_map:
+  sink:
+    - opensearch:
+        hosts: ["http://opensearch:9200"]
+        index_type: trace-analytics-service-map
+# otel-pipeline:
+#     source:
+#       otlp:
+#         ssl: false
+#         port: 21890
+#         health_check_service: true
+#         proto_reflection_service: false
+#         unframed_requests: true
+#         output_format: otel
+#         logs_path: "/v1/logs"
+#         metrics_path: "/v1/metrics"
+#     processor:
+#       - rename_keys:
+#           entries:
+#           - from_key: "time"
+#             to_key: "@timestamp"
+#       - add_entries:
+#           entries:
+#             - key: "processor"
+#               value: "${HOSTNAME}"
+#       - date:
+#           from_time_received: true
+#           destination: "@dp_ingestion_time"
+#     # Spoilers for when DP fixes my issue
+#     # buffer:
+#     #   kafka:
+#     #     bootstrap_servers:
+#     #       - kafka-0.kafka-headless:9092
+#     #       - kafka-1.kafka-headless:9092
+#     #       - kafka-2.kafka-headless:9092
+#     #     producer_properties:
+#     #       max_request_size: 5000000 # 1MB max size
+#     #     encryption:
+#     #       type: none
+#     #     topics:
+#     #       - name: otel-pipeline
+#     #         group_id: data-prepper
+#     #         consumer_max_poll_records: 10
+#     #         create_topic: true
+#     route:
+#       - logs: 'getEventType() == "LOG"'
+#       - metrics: 'getEventType() == "METRIC"'
+#     sink:
+#       - pipeline:
+#           name: otel-metrics-pipeline
+#           routes:
+#             - metrics
+#       - pipeline:
+#          name: otel-logs-pipeline
+#          routes:
+#            - logs
+
+# otel-metrics-pipeline:
+#     source:
+#       pipeline:
+#         name: otel-pipeline
+#     processor:
+#       - otel_metrics:
+#           calculate_histogram_buckets: false
+#           calculate_exponential_histogram_buckets: false
+#           exponential_histogram_max_allowed_scale: 10
+#           flatten_attributes: false
+#     sink:
+#       - opensearch:
+#           hosts: http://opensearch:9200
+#           insecure: true
+#           index_type: custom
+#           index: otel_metrics
+#           action: create
+#           flush_timeout: -1
+
+# otel-logs-pipeline:
+#     source:
+#       pipeline:
+#         name: otel-pipeline
+#     sink:
+#       - opensearch:
+#           hosts: http://opensearch:9200
+#           insecure: true
+#           index_type: custom
+#           index: otel_logs
+#           action: create
+#           flush_timeout: -1

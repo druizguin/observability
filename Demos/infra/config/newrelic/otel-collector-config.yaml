@@ -1,0 +1,145 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+  rabbitmq:
+    endpoint: http://rabbitmq:15672
+    username: guest
+    password: guest
+    collection_interval: 30s
+
+exporters:
+  logging:
+    verbosity: normal #basic, normal, detailed
+  
+  otlp/newrelic:
+    endpoint: https://otlp.eu01.nr-data.net:4317
+    headers:
+      api-key: eu01xxe66fa290a6436adb2d21e0883dFFFFNRAL
+
+  # otlp/tempo:
+  #     endpoint: tempo:4317
+  #     tls:
+  #       insecure: true
+  otlp/aspire:
+    endpoint: "aspiredashboard:18889" #GRPC
+    tls:
+      insecure: true
+
+  elasticsearch/logs:
+    endpoints: ["http://elasticsearch:9200"]
+    tls:
+      insecure: true
+    logs_index: "otel-logs"
+
+  elasticsearch/traces:
+    endpoints: ["http://elasticsearch:9200"]
+    tls:
+      insecure: true
+    traces_index: "otel-traces"
+
+  otlp/jaeger:
+      endpoint: "jaeger:4317"
+      tls:
+        insecure: true
+  prometheus:
+    endpoint: "0.0.0.0:9464" # Prometheus pulls metrics from here
+    send_timestamps: true
+    metric_expiration: 180m
+    enable_open_metrics: true
+
+processors:
+
+  # metricstransform/rename:
+  #   transforms:
+  #     - include: system.cpu.usage
+  #       action: update
+  #       new_name: system.cpu.usage_time
+
+  resource: #transform https://opentelemetry.io/docs/collector/transforming-telemetry/
+    attributes:
+      - key: elasticsearch.index.prefix
+        action: insert
+        
+        from_attribute: service.name
+      - key: otel_protocol
+        from_attribute: http.user_agent
+        action: insert
+
+        #Newrelic parse attributes: https://docs.newrelic.com/es/docs/opentelemetry/best-practices/opentelemetry-best-practices-traces/
+      - key: trace.id
+        from_attribute: Span.trace_id
+        action: insert
+      - key: id
+        from_attribute: Span.span_id
+        action: insert
+
+
+      - key: parent.id
+        from_attribute: ParentId
+        action: insert
+      - key: span.kind
+        from_attribute: Span.kind
+        action: insert
+      - key: id
+        from_attribute: SpanId
+        action: insert
+
+      # - action: delete
+      #   key: "telemetry.sdk.version"
+      # - action: delete
+      #   key: "telemetry.sdk.name"
+      # - action: insert
+      #   key: "serviceid"
+      #   from_attribute: "service.name"
+      # - action: delete
+      #   key: service.name
+
+  batch:
+    timeout: 10s
+    send_batch_size: 10000
+    send_batch_max_size: 11000
+  cumulativetodelta:
+  transform:
+    # trace_statements:
+    #   - truncate_all(attributes, 4095)
+    #   - truncate_all(resource.attributes, 4095)
+    # log_statements:
+    #   - context: resource
+    #     statements:
+    #       - truncate_all(attributes, 4090)
+    #   - context: log
+    #     statements:
+    #       - truncate_all(attributes, 4090)
+    # metric_statements:
+    #   - truncate_all(datapoint.attributes, 4095)
+    #   - truncate_all(resource.attributes, 4095)
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 4000
+    spike_limit_mib: 800
+
+service:
+  #extensions: [health_check]
+  telemetry:
+    logs:
+      level: "debug"  #debug, info,warn,error   
+    metrics:
+      address: ":8888"
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, resource, transform, batch]
+      exporters: [logging,otlp/aspire,otlp/newrelic] #otlp/aspire, logging, otlp/jaeger, , elasticsearch/traces
+    logs:
+      receivers: [otlp]
+      processors: [transform, resource, batch] # ,resource
+      exporters: [otlp/aspire,otlp/newrelic] # otlp/aspire, loki, otlp/elastic, otlp/newrelic, elasticsearch/logs
+    metrics:
+      receivers: [otlp,rabbitmq]
+      processors: [transform, resource,  batch] #metricstransform/rename,
+      exporters: [logging,otlp/aspire,otlp/newrelic,prometheus] #otlp/aspire, otlp/newrelic, prometheus,

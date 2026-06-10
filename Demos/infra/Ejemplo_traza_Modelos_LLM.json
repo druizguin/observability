@@ -1,0 +1,58 @@
+{
+  "message": {
+    "content": "[REDACTED]",
+    "refusal": null,
+    "role": "assistant",
+    "annotations": [],
+    "audio": null,
+    "function_call": null,
+    "tool_calls": null
+  },
+  "usage": {
+    "completion_tokens": "[REDACTED]",
+    "prompt_tokens": "[REDACTED]",
+    "total_tokens": "[REDACTED]",
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": "[REDACTED]",
+      "audio_tokens": "[REDACTED]",
+      "reasoning_tokens": "[REDACTED]",
+      "rejected_prediction_tokens": "[REDACTED]"
+    },
+    "prompt_tokens_details": {
+      "audio_tokens": "[REDACTED]",
+      "cached_tokens": "[REDACTED]"
+    }
+  },
+  "attributes": {
+    "async": "[REDACTED]",
+    "json_schema": "[REDACTED]",
+    "request_data": {
+      "messages": [
+        {
+          "content": "[REDACTED]",
+          "role": "[REDACTED]"
+        },
+        {
+          "content": "[REDACTED]",
+          "role": "[REDACTED]"
+        }
+      ],
+
+      //NEW
+      "provider": "Azure",
+      "version": "4",
+      "size": "mini", //"mini", "small", "large", "medium"
+      
+      //NEW
+
+      "model": "GPT",
+
+
+      "frequency_penalty": "[REDACTED]",
+      "presence_penalty": "[REDACTED]",
+      "stream": "[REDACTED]",
+      "temperature": "[REDACTED]",
+      "top_p": "[REDACTED]"
+    }
+  }
+}

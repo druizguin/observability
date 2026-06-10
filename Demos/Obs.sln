@@ -24,6 +24,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rating.WebApi", "Services\R
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebOpenObserveDemo", "Services\WebOpenObserveDemo\WebOpenObserveDemo.csproj", "{A8EB9D69-1D9E-091A-11CE-0234ABBEE77D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "config", "config\config.csproj", "{B9505733-186E-4748-B4A5-44D31A88F834}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -56,6 +58,10 @@ Global
 		{A8EB9D69-1D9E-091A-11CE-0234ABBEE77D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A8EB9D69-1D9E-091A-11CE-0234ABBEE77D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A8EB9D69-1D9E-091A-11CE-0234ABBEE77D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B9505733-186E-4748-B4A5-44D31A88F834}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B9505733-186E-4748-B4A5-44D31A88F834}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B9505733-186E-4748-B4A5-44D31A88F834}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B9505733-186E-4748-B4A5-44D31A88F834}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -68,6 +74,7 @@ Global
 		{71D00D12-C7AB-510B-3B15-0B055AFE30BA} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 		{59B8A941-A352-E510-08F1-D9CD7DAA2100} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 		{A8EB9D69-1D9E-091A-11CE-0234ABBEE77D} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{B9505733-186E-4748-B4A5-44D31A88F834} = {2AC4E9F9-7E5D-417C-B4EA-7EC4EEB021B5}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {07516192-4EE0-4A6B-AC28-C9CF7D7CDA05}

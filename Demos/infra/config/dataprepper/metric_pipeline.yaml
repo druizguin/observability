@@ -1,0 +1,40 @@
+otel-logs-otel-output:
+  source:
+    otel_logs_source:
+      ssl: false
+      sslKeyFile: /usr/share/data-prepper/certs/dp-key.pem
+      sslKeyCertChainFile: /usr/share/data-prepper/certs/dp-cert.pem
+      unframed_requests: true
+      path: /ingest/${pipelineName}/v1/logs
+      compression: gzip
+      output_format: otel
+      request_timeout: 15000
+      health_check_service: true
+      proto_reflection_service: true
+  sink:
+    - opensearch:
+        hosts: ["http://opensearch:9200"]
+        index: otel_logs
+        insecure: true
+
+
+
+
+
+
+
+
+
+
+
+# metrics
+metric-pipeline:
+  source:
+    otel_metrics_source:
+      ssl: false
+  processor:
+    - otel_metrics:
+  sink:
+    - opensearch:
+        hosts: [ "http://opensearch:9200" ]
+        index: otel_metrics
