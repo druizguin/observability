@@ -1,0 +1,93 @@
+﻿receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 512
+  batch:
+
+  # 1) Incluir solo métricas cuyo nombre empiece por 'unir.'
+  filter/include_biz:
+    metrics:
+      include:
+        match_type: regexp
+        metric_names:
+          - ${COMPANY_NAME}.*
+  # 2) Excluir métricas para el pipeline de Elastic
+  filter/exclude_biz:
+    metrics:
+      exclude:
+        match_type: regexp
+        metric_names:
+          - ${COMPANY_NAME}.*
+
+  # resource:
+  #   attributes:
+  #     - key: otel_protocol
+  #       from_attribute: http.user_agent
+  #       action: insert      
+      # - key: parent.id
+      #   from_attribute: ParentId
+      #   action: insert
+      # - key: span.kind
+      #   from_attribute: Span.kind
+      #   action: insert
+      # - key: id
+      #   from_attribute: SpanId
+      #   action: insert
+
+exporters:
+  otlp_grpc/apm:
+    endpoint: http://fleet-server:8200
+    headers:
+      Authorization: "Bearer ${ELASTIC_APM_SECRET_TOKEN}"
+    compression: gzip
+    tls:
+      insecure: true
+  otlp_grpc/aspire:
+    endpoint: "aspiredashboard:18889" #GRPC
+    tls:
+      insecure: true
+  prometheus:
+    endpoint: "0.0.0.0:9464" # Prometheus pulls metrics from here
+    send_timestamps: true
+    metric_expiration: 180m
+    enable_open_metrics: true
+  debug:
+    verbosity: detailed
+
+service:
+  pipelines:
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, batch] #resource,
+      exporters: [otlp_grpc/apm] #,otlp_grpc/aspire, debug]
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, batch] #resource,
+      exporters: [otlp_grpc/apm] #,otlp_grpc/aspire, debug]
+
+
+    # Pipeline para metricas 'unir.' → Prometheus (scrape)
+    metrics/biz_to_prometheus:
+      receivers: [otlp]
+      processors: [filter/include_biz, memory_limiter, batch]
+      exporters: [prometheus] #,otlp_grpc/aspire
+
+
+    # Pipeline para metricas no 'unir.' → Elastic
+    metrics/nonbiz_to_elastic:
+      receivers: [otlp]
+      processors: [filter/exclude_biz, memory_limiter, batch]
+      exporters: [otlp_grpc/apm]
+
+    # metrics:
+    #   receivers: [otlp]
+    #   processors: [resource,memory_limiter, batch]
+    #   exporters: [otlp_grpc/apm, prometheus] #, otlp_grpc/apm, prometheus, debug]

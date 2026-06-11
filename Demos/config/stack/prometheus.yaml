@@ -1,8 +1,47 @@
+# prometheus.yaml - Prometheus with remote write to Mimir
 global:
-  scrape_interval:     5s
+  scrape_interval: 5s
   evaluation_interval: 5s
 
+# Send all collected metrics to Mimir for long-term storage
+remote_write:
+  - url: http://mimir:9009/api/v1/push
+    # Add a tenant header if multi-tenancy is enabled
+    # headers:
+    #   X-Scope-OrgID: team-a
+
+# Scrape configurations
 scrape_configs:
   - job_name: 'otel'
     static_configs:
-      - targets: [ 'otel-collector:9464' ]
+      - targets: [ 'otelcol:9464' ]
+
+    metric_relabel_configs:
+      - source_labels: [ __name__ ]
+        regex: 'scrape_*|target_info'
+        action: drop    
+
+  # Scrape Prometheus itself
+  # - job_name: 'prometheus'
+  #   static_configs:
+  #     - targets: ['localhost:9090']
+
+  # # Scrape Mimir metrics
+  # - job_name: 'mimir'
+  #   static_configs:
+  #     - targets: ['mimir:9009']
+
+  # # Scrape Node Exporter for host metrics
+  # - job_name: 'node'
+  #   static_configs:
+  #     - targets: ['node-exporter:9100']
+
+  # # Scrape Docker containers with Prometheus labels
+  # - job_name: 'docker'
+  #   docker_sd_configs:
+  #     - host: unix:///var/run/docker.sock
+  #   relabel_configs:
+  #     - source_labels: [__meta_docker_container_label_prometheus_scrape]
+  #       regex: 'true'
+  #       action: keep
+

@@ -1,15 +1,15 @@
----
+# ---
 
-services:
+# services:
 
-  aspiredashboard:
-     hostname: aspiredashboard
-     container_name: aspiredashboard
-     image: mcr.microsoft.com/dotnet/aspire-dashboard:latest
-     ports:
-       - "18888:18888" #UI
-       - "18889:18889" #GRPC
-     restart: always
-     environment:
-       DOTNET_DASHBOARD_OTLP_GRPCENDPOINT: 0.0.0.0:18889    
-       DOTNET_DASHBOARD_UNSECURED_ALLOW_ANONYMOUS: true
+#   aspiredashboard:
+#      hostname: aspiredashboard
+#      container_name: aspiredashboard
+#      image: mcr.microsoft.com/dotnet/aspire-dashboard:latest
+#      ports:
+#        - "18888:18888" #UI
+#        - "18889:18889" #GRPC
+#      restart: always
+#      environment:
+#        DOTNET_DASHBOARD_OTLP_GRPCENDPOINT: 0.0.0.0:18889    
+#        DOTNET_DASHBOARD_UNSECURED_ALLOW_ANONYMOUS: true

@@ -1,0 +1,14 @@
+{
+  "profiles": {
+    "Docker Compose": {
+      "commandName": "DockerCompose",
+      "commandVersion": "1.0",
+      "serviceActions": {
+        "rating.cli": "StartDebugging",
+        "rating.validator.cli": "StartDebugging",
+        "rating.webapi": "StartDebugging",
+        "webopenobservedemo": "StartDebugging"
+      }
+    }
+  }
+}

@@ -8,17 +8,16 @@
     <DockerLaunchAction>LaunchBrowser</DockerLaunchAction>
     <DockerServiceUrl>{Scheme}://localhost:{ServicePort}/swagger</DockerServiceUrl>
     <DockerServiceName>rating.webapi</DockerServiceName>
-    <DockerComposeProjectName>observability_demo_v2</DockerComposeProjectName>
+    <DockerComposeProjectName>observability_demos</DockerComposeProjectName>
   </PropertyGroup>
   <ItemGroup>
+    <None Include=".dockerignore" />
     <None Include="docker-compose-opensearch.yml" />
     <None Include="docker-compose-elastic.yml" />
-    <None Include="docker-compose-aspire.yml" />
     <None Include="docker-compose.override.yml">
       <DependentUpon>docker-compose.yml</DependentUpon>
     </None>
     <None Include="docker-compose.yml" />
-    <None Include=".dockerignore" />
-    <None Include="docker-compose-otel.yml" />
+    <None Include="docker-compose-observability.yml" />
   </ItemGroup>
 </Project>

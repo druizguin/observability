@@ -45,9 +45,9 @@ public class TelemetryProxyController : ControllerBase
         try
         {
             // Leer configuración desde appsettings.json
-            var openObserveUrl = _configuration["OpenObserve:Endpoint"] ?? "http://localhost:5080";
+            var openObserveUrl = _configuration["OpenObserve:Endpoint"] ?? "http://openobserve:5080";
             var organization = _configuration["OpenObserve:Organization"] ?? "default";
-            var authToken = _configuration["OpenObserve:AuthToken"] ?? "cm9vdEBleGFtcGxlLmNvbTozdm5VZmZIbmlmTENGZEZ4";
+            var authToken = _configuration["OpenObserve:AuthToken"] ?? "cm9vdEBleGFtcGxlLmNvbTo2Tkp0YVRwdHVrSHVKZEty";
 
             var targetUrl = $"{openObserveUrl}/api/{organization}/v1/{signalType}";
 

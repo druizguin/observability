@@ -1,6 +1,4 @@
-
-
-receivers:
+﻿receivers:
   otlp:
     protocols:
       grpc:
@@ -11,25 +9,66 @@ receivers:
 exporters:
   debug:
     verbosity: normal #basic, normal, detailed
-  
+
+  otlp/aspire:
+    endpoint: "aspiredashboard:18889" #GRPC
+    tls:
+      insecure: true
+
   otlphttp/openobserve:
     endpoint: "http://openobserve:5080/api/default"
     headers:
-      Authorization: Basic cm9vdEBleGFtcGxlLmNvbTozdm5VZmZIbmlmTENGZEZ4
+      Authorization: Basic ${OPENOBSERVE_APIKEY}
 
+  prometheus:
+    endpoint: "0.0.0.0:9464" # Prometheus pulls metrics from here
+    send_timestamps: true
+    metric_expiration: 180m
+    enable_open_metrics: true
+    resource_to_telemetry_conversion:
+      enabled: true
 
 processors:
   resource: #transform https://opentelemetry.io/docs/collector/transforming-telemetry/
     attributes:
-      - key: parent.id
-        from_attribute: ParentId
+      - key: parent_id
+        from_attribute: parentid
         action: insert
       - key: span.kind
         from_attribute: Span.kind
         action: insert
-      - key: id
+      - key: span_id
         from_attribute: SpanId
         action: insert
+
+      - key: trace_id
+        from_attribute: TraceId
+        action: insert
+
+      - action: delete
+        key: "traceid"
+      # - action: delete
+      #   key: "telemetry.sdk.name"
+      # - action: insert
+      #   key: "serviceid"
+      #   from_attribute: "service.name"
+      # - action: delete
+      #   key: service.name
+
+  # 1) Incluir solo métricas cuyo nombre empiece por 'unir.'
+  filter/include_biz:
+    metrics:
+      include:
+        match_type: regexp
+        metric_names:
+          - unir.*
+  # 2) Excluir métricas para el pipeline de Elastic
+  filter/exclude_biz:
+    metrics:
+      exclude:
+        match_type: regexp
+        metric_names:
+          - unir.*
 
   batch:
     timeout: 10s
@@ -56,12 +95,25 @@ service:
     traces:
       receivers: [otlp]
       processors: [memory_limiter, resource, batch]
-      exporters: [otlphttp/openobserve] 
+      exporters: [otlphttp/openobserve, otlp/aspire] 
     logs:
       receivers: [otlp]
-      processors: [resource, batch] 
-      exporters: [otlphttp/openobserve] 
+      processors: [ resource, batch] 
+      exporters: [otlphttp/openobserve, otlp/aspire] 
+
     metrics:
       receivers: [otlp]
-      processors: [resource,  batch] 
-      exporters: [otlphttp/openobserve]
+      processors: [resource,  batch] #metricstransform/rename,
+      exporters: [prometheus, otlphttp/openobserve, otlp/aspire]
+
+    # # Pipeline para metricas de negocio
+    # metrics/biz_to_prometheus:
+    #   receivers: [otlp]
+    #   processors: [filter/include_biz, memory_limiter, batch]
+    #   exporters: [prometheus, otlp/aspire] #,otlp_grpc/aspire
+
+    # # Pipeline para metricas tecnicas
+    # metrics/nonbiz_to_elastic:
+    #   receivers: [otlp]
+    #   processors: [filter/exclude_biz, memory_limiter, batch]
+    #   exporters: [otlphttp/openobserve, otlp/aspire]

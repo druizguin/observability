@@ -8,66 +8,81 @@
 
   services:
 
-    # rating.webapi:
-    #   hostname: rating.webapi
-    #   image: ${DOCKER_REGISTRY-}ratingwebapi
-    #   build:
-    #     context: .
-    #     dockerfile: Services/Rating/Rating.WebApi/Dockerfile
-    #   ports:
-    #     - "5398:5398"
-    #     - "5399:5399"
-    #   volumes: 
-    #     - ./docker_data/ratingapi/db:/app/data/
+    webopenobservedemo:
+      container_name: webopenobservedemo
+      hostname: webopenobservedemo
+      image: ${DOCKER_REGISTRY-}webopenobservedemo
+      build:
+        context: .
+        dockerfile: Services/WebOpenObserveDemo/Dockerfile
+      depends_on:
+        - rating.webapi
+        - otelcol
 
-    #   environment:
-    #     - ASPNETCORE_HTTP_PORTS=5398
-    #     - settings__rabbitServer=${RABBIT_SERVER}
-    #     - settings__rabbitUser=${RABBIT_USER}
-    #     - settings__rabbitPassword=${RABBIT_PASSWORD}
-    #     - Observability__Tracing__RedisUrl=${REDISSERVER}
-    #     - Serilog__WriteTo__1__Args__ResourceAttributes__service.name=${SERVICENAMEPREFIX}.rating.api
-    #     - Serilog__WriteTo__1__Args__Endpoint=${OTELINPUT}
-    #   depends_on: 
-    #     - redis
-    #     - rabbitmq
-    #     - otelcol
+    rating.webapi:
+      container_name: rating.webapi
+      hostname: rating.webapi
+      image: ${DOCKER_REGISTRY-}ratingwebapi
+      build:
+        context: .
+        dockerfile: Services/Rating.WebApi/Dockerfile
+      ports:
+        - "5398:5398"
+        - "5399:5399"
+      volumes: 
+        - ./docker_data/ratingapi/db:/app/data/
+      environment:
+        - ASPNETCORE_HTTP_PORTS=5398
+        - settings__rabbitServer=${RABBIT_SERVER}
+        - settings__rabbitUser=${RABBIT_USER}
+        - settings__rabbitPassword=${RABBIT_PASSWORD}
+        - Observability__Tracing__RedisUrl=${REDISSERVER}
+        - Observability__Metrics__Prefix=${COMPANY_NAME}
+        - Serilog__WriteTo__1__Args__ResourceAttributes__service.name=${SERVICENAMEPREFIX}.rating.api
+        - Serilog__WriteTo__1__Args__Endpoint=${OTELINPUT}
+      depends_on: 
+        - redis
+        - rabbitmq
+        - otelcol
 
-    # rating.cli:
-    #   hostname: rating.cli
-    #   image: ${DOCKER_REGISTRY-}ratingcli
-    #   build:
-    #     context: .
-    #     dockerfile: Rating.Cli/Dockerfile
-    #   environment:
-    #     - DOTNET_ENVIRONMENT=Development
-    #     - Settings__serviceUrl=http://localhost:5398
-    #     - Serilog__WriteTo__1__Args__ResourceAttributes__service.name=${SERVICENAMEPREFIX}.rating.cli
-    #     - Serilog__WriteTo__1__Args__Endpoint=${OTELINPUT}
-    #   depends_on:
-    #     - rating.webapi
-    #     - otelcol
+    rating.cli:
+      hostname: rating.cli
+      container_name: rating.cli
+      image: ${DOCKER_REGISTRY-}ratingcli
+      build:
+        context: .
+        dockerfile: Services/Rating.Cli/Dockerfile
+      environment:
+        - DOTNET_ENVIRONMENT=Development
+        - Settings__serviceUrl=http://localhost:5398
+        - Observability__Metrics__Prefix=${COMPANY_NAME}
+        - Serilog__WriteTo__1__Args__ResourceAttributes__service.name=${SERVICENAMEPREFIX}.rating.cli
+        - Serilog__WriteTo__1__Args__Endpoint=${OTELINPUT}
+      depends_on:
+        - rating.webapi
+        - otelcol
 
-    # rating.validator.cli:
-    #   image: ${DOCKER_REGISTRY-}ratingvalidatorcli
-    #   build:
-    #     context: .
-    #     dockerfile: Rating.Validator.Cli/Dockerfile
-    #   environment:
-    #     - settings__rabbitServer=rabbitmq
-    #     - settings__rabbitUser=guest
-    #     - settings__serviceUrl=${RATING_API}
-    #     - settings__rabbitPassword=guest
-    #     - Observability__Tracing__RedisUrl=redis:6379
-    #     - Serilog__WriteTo__1__Args__ResourceAttributes__service.name=${SERVICENAMEPREFIX}.validator.cli
-    #     - Serilog__WriteTo__1__Args__Endpoint=${OTELINPUT}
+    rating.validator.cli:
+      image: ${DOCKER_REGISTRY-}ratingvalidatorcli
+      container_name: rating.validator.cli
+      build:
+        context: .
+        dockerfile: Services/Rating.Validator.Cli/Dockerfile
+      environment:
+        - settings__rabbitServer=rabbitmq
+        - settings__rabbitUser=guest
+        - settings__serviceUrl=${RATING_API}
+        - settings__rabbitPassword=guest
+        - Observability__Tracing__RedisUrl=redis:6379
+        - Observability__Metrics__Prefix=${COMPANY_NAME}
+        - Serilog__WriteTo__1__Args__ResourceAttributes__service.name=${SERVICENAMEPREFIX}.validator.cli
+        - Serilog__WriteTo__1__Args__Endpoint=${OTELINPUT}
+        - OTEL_INSTRUMENTATION_HTTP_CLIENT_CAPTURE_REQUEST_HEADERS=true
 
-    #     - OTEL_INSTRUMENTATION_HTTP_CLIENT_CAPTURE_REQUEST_HEADERS=true
-
-    #   depends_on:
-    #     - rating.webapi
-    #     - rabbitmq
-    #     - otelcol
+      depends_on:
+        - rating.webapi
+        - rabbitmq
+        - otelcol
 
     redis:
       hostname: redis

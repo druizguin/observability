@@ -11,4 +11,4 @@ services:
       ZO_ROOT_USER_EMAIL: "root@example.com"
       ZO_ROOT_USER_PASSWORD: "Complexpass#123"
     volumes:
-      - ./docker_data/openobserve/data:/data
+      - ../../../docker_data/openobserve/data:/data

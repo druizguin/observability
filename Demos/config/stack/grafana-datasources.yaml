@@ -1,90 +1,29 @@
-apiVersion: 1
-
-datasources:
-# - name: Tempo
-#   type: tempo
-#   access: proxy
-#   url: http://tempo:3200
-#   isDefault: false
-#   jsonData:
-#     httpMethod: GET
-#     serviceMap:
-#       enabled: true
-- name: Prometheus
-  type: prometheus
-  uid: prometheus
-  access: proxy
-  orgId: 1
-  url: http://prometheus:9090
-  basicAuth: false
-  isDefault: true
-  version: 1
-  editable: false
-  jsonData:
-    httpMethod: GET
-    exemplarTraceIdDestinations:
-    - name: trace_id
-      datasourceUid: jaeger
-
-- name: NewRelic
-  type: grafana-newrelic-datasource
-  access: proxy
-  url: https://api.newrelic.com
-  jsonData:
-    region: EU
-  secureJsonData:
-    accountId: 6250260
-    apiKey: eu01xxe66fa290a6436adb2d21e0883dFFFFNRAL
-
-# - name: NewRelicPrometheus
-#   type: prometheus
-#   access: proxy
-#   url: https://prometheus-api.eu.newrelic.com
-#   jsonData:
-#     httpHeaderName1: "X-Query-Key"
-#   secureJsonData:
-#     httpHeaderValue1: "TU_QUERY_KEY"
-#   isDefault: false
-
-- name: ElasticSearch
-  type: elasticsearch
-  access: proxy
-  url: http://elasticsearch:9200
-  jsonData:
-    timeField: "@timestamp"
-    esVersion: 8
-    interval: Daily
-    maxConcurrentShardRequests: 5
-    logMessageField: message
-    logLevelField: level
-  version: 1
-  editable: true
-
-- name: Jaeger
-  type: jaeger
-  access: proxy
-  orgId: 1
-  url: http://jaeger:16686
-  basicAuth: false
-  isDefault: false
-  version: 1
-  editable: false
   apiVersion: 1
-  uid: jaeger
-- name: Loki
-  type: loki
-  access: proxy
-  orgId: 1
-  url: http://loki:3100
-  basicAuth: false
-  isDefault: false
-  version: 1
-  editable: false
-  apiVersion: 1
-  uid: loki
-  jsonData:
-    derivedFields:
-    - datasourceUid: jaeger
-      matcherRegex: (?:"traceid"):"(\w+)"
-      name: traceid
-      url: $${__value.raw}
+
+  datasources:
+      - name: Prometheus
+        type: prometheus
+        uid: prometheus
+        access: proxy
+        orgId: 1
+        url: http://prometheus:9090
+        basicAuth: false
+        isDefault: false
+        version: 1
+        editable: false
+        jsonData:
+          httpMethod: GET
+          exemplarTraceIdDestinations:
+          - name: trace_id
+            datasourceUid: jaeger
+      - name: Mimir
+        type: prometheus
+        access: proxy
+        url: http://mimir:9009/prometheus
+        isDefault: true
+        jsonData:
+          httpHeaderName1: 'X-Scope-OrgID'
+        secureJsonData:
+          httpHeaderValue1: 'anonymous'
+
+

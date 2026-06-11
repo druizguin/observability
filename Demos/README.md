@@ -10,15 +10,15 @@ Solución de demostración que muestra cómo instrumentar microservicios .NET co
 | [New Relic](https://newrelic.com/) | `newrelic` | ✓ | ✓ | ✓ |
 | [OpenObserve](https://openobserve.ai/) | `openobserve` | ✓ | ✓ | ✓ |
 | [Elastic APM / ELK](https://www.elastic.co/observability) | `elk` | ✓ | ✓ | ✓ |
-| [OpenSearch](https://opensearch.org/) | `opensearch` | ✓ | - | - |
+| [OpenSearch](https://opensearch.org/) | `opensearch` | ✓ | - | ✓ |
 | Todos simultáneamente | `all` | ✓ | ✓ | ✓ |
 
 ## Arquitectura
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                        Servicios .NET                        │
-│  rating.webapi  │  rating.cli  │  rating.validator.cli       │
+│                        Servicios .NET                       │
+│  rating.webapi  │  rating.cli  │  rating.validator.cli      │
 │          (OpenTelemetry SDK — OTLP gRPC → :4317)            │
 └──────────────────────────┬──────────────────────────────────┘
                            │

@@ -7,6 +7,7 @@ using Rating.BusinessLayer.Data;
 using Rating.BusinessLayer.Services;
 using Serilog;
 using StackExchange.Redis;
+using System.Diagnostics;
 using Unir.Framework.Observability;
 //using Rating.BusinessLayer.Models;
 //using System.Collections.Generic;
@@ -76,6 +77,16 @@ public class Program
         builder.Services.AddControllers();
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();
+
+        var reddis_conn = builder.Configuration.GetSection("Redis")["Configuration"] ?? "redis:6379";
+        var connection = ConnectionMultiplexer.Connect(reddis_conn, conf =>
+        {
+                conf.AbortOnConnectFail = false;
+                conf.ConnectRetry = 5;
+        });
+
+
+        builder.Services.AddSingleton<IConnectionMultiplexer>(connection);
 
         builder.Services.AddSingleton<RedisCacheService>();
 

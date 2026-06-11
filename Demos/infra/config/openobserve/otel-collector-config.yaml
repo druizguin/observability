@@ -24,13 +24,13 @@ exporters:
 
   prometheus:
     endpoint: "0.0.0.0:9464" # Prometheus pulls metrics from here
-    send_timestamps: true
+    send_timestamps: false
     metric_expiration: 180m
-    enable_open_metrics: true
-    resource_to_telemetry_conversion:
-      enabled: true
+    enable_open_metrics: false
 
 processors:
+  cumulative_to_delta:
+
   resource: #transform https://opentelemetry.io/docs/collector/transforming-telemetry/
     attributes:
       - key: parent_id
@@ -47,8 +47,6 @@ processors:
         from_attribute: TraceId
         action: insert
 
-      - action: delete
-        key: "traceid"
       # - action: delete
       #   key: "telemetry.sdk.name"
       # - action: insert
@@ -71,13 +69,7 @@ service:
   telemetry:
     logs:
       level: "info"  #debug, info,warn,error   
-    metrics:
-      readers:
-        - pull:
-            exporter:
-              prometheus:
-                host: '0.0.0.0'
-                port: 8888
+
   pipelines:
     traces:
       receivers: [otlp]
@@ -89,5 +81,5 @@ service:
       exporters: [otlp/aspire, otlphttp/openobserve] # loki, otlp/elastic, , otlp/newrelic, elasticsearch/logs
     metrics:
       receivers: [otlp]
-      processors: [resource,  batch] #metricstransform/rename,
+      processors: [memory_limiter, cumulative_to_delta, batch, resource] #metricstransform/rename,
       exporters: [otlp/aspire, prometheus, otlphttp/openobserve] # , otlp/newrelic, prometheus,
